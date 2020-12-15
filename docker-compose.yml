@@ -1,0 +1,84 @@
+version: '3'
+
+services:
+  planka:
+    image: meltyshev/planka:latest
+    command: >
+      bash -c
+        "for i in `seq 1 30`; do
+          ./start.sh &&
+          s=$$? && break || s=$$?;
+          echo \"Tried $$i times. Waiting 5 seconds...\";
+          sleep 5;
+        done; (exit $$s)"
+    restart: unless-stopped
+    volumes:
+      - user-avatars:/app/public/user-avatars
+      - project-background-images:/app/public/project-background-images
+      - attachments:/app/public/attachments
+    ports:
+      - 3000:1337
+    environment:
+      - BASE_URL=http://localhost:3000
+      - DATABASE_URL=postgresql://postgres@postgres/planka
+      - SECRET_KEY=notsecretkey
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:alpine
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=planka
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_PASSWORD=planka
+
+  pgadmin:
+    image: dpage/pgadmin4:4.18
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@localhost
+      - PGADMIN_DEFAULT_PASSWORD=planka
+      - PGADMIN_LISTEN_PORT=80
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    links:
+      - "postgres:pgsql-server"
+
+volumes:
+  user-avatars:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/planka
+  project-background-images:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/planka
+  attachments:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/planka
+  db-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/postgres
+  pgadmin-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/pgadmin-data
