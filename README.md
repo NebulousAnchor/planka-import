@@ -12,12 +12,3 @@ This docker-composition will run 3 containers: Planka, Postgres, and pgAdmin. Th
 **Step 3:** Connect to Planka at `http://localhost:3000` using the username `demo@demo.demo` and password of `demo`. 
 
 **Note:** If pgAdmin can be found at `http://localhost:8080` with the username is `admin@localhost` and password `planka`. The postgres server info is host `host.docker.internal`, port `5432`, maintenance database `postgres`, and username `postgres`.
-
-### Planka ###
-- Reachable at http://localhost:3000
-
-### Postgres ###
-
-
-### pgAdmin ###
-         - Reachable at http://localhost:8080
