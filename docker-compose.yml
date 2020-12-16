@@ -35,6 +35,7 @@ services:
     environment:
       - POSTGRES_DB=planka
       - POSTGRES_HOST_AUTH_METHOD=trust
+      #- POSTGRES_USER=admin
       - POSTGRES_PASSWORD=planka
 
   pgadmin:
