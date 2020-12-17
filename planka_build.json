@@ -1,0 +1,87 @@
+{
+    "boards": [
+        {
+            "name": "Tasks",
+            "lists": [
+                {
+                    "name": "To-do",
+                    "cards": [
+                        {
+                            "name": "NMAP",
+                            "tasks": [
+                                "Discovery Scan",
+                                "Full Port Scan"
+                            ]
+                        },
+                        {
+                            "name": "Eyewitness Scan",
+                            "tasks": [
+                                "Start Scan",
+                                "Review Findings"
+                            ]
+                        },
+                        {
+                            "name": "Nessus Scan",
+                            "tasks": [
+                                "Uncredentialed",
+                                "Credentialed",
+                                "Review Critical/High Findings"
+                            ]
+                        },
+                        {
+                            "name": "Web App",
+                            "tasks": [
+                                ""
+                            ]
+                        },
+                        {
+                            "name": "WiFi Assessment",
+                            "tasks": [
+                                "War-drive",
+                                "Check host isolation",
+                                "Review Findings"
+                            ]
+                        },
+                        {
+                            "name": "Database",
+                            "tasks": [
+                                "Nessus Credentialed Scan"
+                            ]
+                        },
+                        {
+                            "name": "OSSA",
+                            "tasks": [
+                                "Review Baseline"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Working",
+                    "cards": []
+                },
+                {
+                    "name": "Done",
+                    "cards": []
+                }
+            ]
+        },
+        {
+            "name": "Hammer",
+            "lists": [
+                {
+                    "name": "To-do",
+                    "cards": []
+                },
+                {
+                    "name": "Deadend",
+                    "cards": []
+                },
+                {
+                    "name": "Done",
+                    "cards": []
+                }
+            ]
+        }
+    ]
+}

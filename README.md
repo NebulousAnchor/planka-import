@@ -43,8 +43,15 @@ Projects:
                 * All cards that are currently being worked.
             * Done List
                 * All Cards that have been completed.
+        * Hammer Board
+            * To-Do List
+                * This will hold all imported hosts and ports.
+            * Done List
+                * All hosts that proved to be nothing significant.    
             * Deadend List
                 * Any checks of a host, exploit, etc that only one person has checked. This will allow for a second person to check as time is available. 
+
+This build out will be loaded from the planka_build.json
 
 Running the `./planka-setup.py` script with `-i` argument followed by a file name will import NMAP findings. These findings will be imported into a Hold Board that has a NMAP list with a card for each IP and subtasks for each port. 
                 
