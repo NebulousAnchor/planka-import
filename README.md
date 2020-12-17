@@ -18,33 +18,34 @@ This docker-composition will run 3 containers: Planka, Postgres, and pgAdmin. Th
 Running the `./planka-setup.py` script with `-n` argument followed by a project name will build out a Planka server with the following items:
 
 Projects:
-    * 'Project Name'
-        * Tasks Board
-            * To-do List
-                * NMAP Scans Card
-                    * Discovery Scan
-                    * Full Port Scan
-                * Eyewitness Scan Card
-                    * Start Scan
-                    * Review Findings
-                * Nessus Scan Card
-                    * Uncredentialed
-                    * Credentialed
-                    * Review Critical/High Findings
-                * Web App Card
-                * WiFi Assessment Card
-                    * War-drive
-                    * Check host isolation
-                * Database Scan Card
-                    * Nessus Credentialed Scan
-                * OSSA Card
-                    * Review Baseline
-            * Working List
-                * All cards that are currently being worked.
-            * Done List
-                * All Cards that have been completed.
-            * Deadend List
-                * Any checks of a host, exploit, etc that only one person has checked. This will allow for a second person to check as time is available. 
+
+* 'Project Name'
+   * Tasks Board
+      * To-do List
+         * NMAP Scans Card
+            * Discovery Scan
+            * Full Port Scan
+         * Eyewitness Scan Card
+            * Start Scan
+            * Review Findings
+         * Nessus Scan Card
+            * Uncredentialed
+            * Credentialed
+            * Review Critical/High Findings
+         * Web App Card
+         * WiFi Assessment Card
+            * War-drive
+            * Check host isolation
+         * Database Scan Card
+            * Nessus Credentialed Scan
+         * OSSA Card
+            * Review Baseline
+   * Working List
+      * All cards that are currently being worked.
+   * Done List
+      * All Cards that have been completed.
+   * Deadend List
+      * Any checks of a host, exploit, etc that only one person has checked. This will allow for a second person to check as time is available. 
 
 Running the `./planka-setup.py` script with `-i` argument followed by a file name will import NMAP findings. These findings will be imported into a Hold Board that has a NMAP list with a card for each IP and subtasks for each port. 
                 
