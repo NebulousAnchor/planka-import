@@ -1,33 +1,22 @@
 #!/usr/bin/env python3
-"""Build out a Planka setup.
-Usage:
-  planka-setup [--log-level=LEVEL] -n PROJECT_NAME [DB_NAME | DB_USER | DB_PASSWORD | DB_HOST | DB_PORT]
-  planka-setup [--log-level=LEVEL] -i FILE [DB_NAME | DB_USER | DB_PASSWORD | DB_HOST | DB_PORT]
-  planka-setup (-h | --help)
-  planka-setup --version
-Options:
-  DB_HOST                   The host IP for the postgres server. [default: 127.0.0.1]
-  DB_PASSWORD               Password for the postgres server. [default: planka]
-  DB_PORT                   Port fo the postgres server. [default: 5432]
-  DB_NAME                   Postgres database name. [default: planka]
-  DB_USER                   Username for the postgres server. [default: postgres]
-  PROJECT_NAME              The name for the main project.
-  -i --import               Import NMAP File.
-  -n --new                  Set up a new Project.
-  -h --help                 Show this message.
-  --version                 Show version.
-  -l --log-level=LEVEL      If specified, then the log level will be set to
-                            the specified value.  Valid values are "debug", "info",
-                            "warning", "error", and "critical". [default: info]
-"""
+
+
 # Standard Python Libraries
+import argparse
+import json
 import logging
-from typing import Dict
+
 
 # Third-Party Libraries
-from docopt import docopt
+
 import psycopg2
 from psycopg2 import OperationalError
+
+POSITION_GAP = 65535
+
+
+def generate_insert():
+    pass
 
 
 def create_connection(db_name, db_user, db_password, db_host, db_port):
@@ -100,20 +89,166 @@ def execute_query(connection, query):
     try:
         cursor.execute(query)
         connection.commit()
-        logging.info("Query executed successfully")
+        logging.debug("Query executed successfully")
     except OperationalError as e:
         logging.error(f"The error '{e}' occurred")
 
 
+def build_new(connection, project_id):
+    """Build out the project boards
+
+    Args:
+        connection (Psycopg2 Connection): The connection to the postgres database.
+        project_id (string): The project that boards should be added to.
+    """
+
+    # Hold the postion of each item.
+    board_position = POSITION_GAP
+    list_position = POSITION_GAP
+    card_position = POSITION_GAP
+
+    logging.debug("Loading data structure from planka_build.json")
+    with open("planka_build.json", "r") as fp:
+        data_structure = json.load(fp)
+
+    for board_index, board in enumerate(data_structure["boards"]):
+        logging.info(f"Building {board['name']} Board.")
+
+        query = f"""
+            INSERT INTO
+                board (project_id, type, name, position)
+            VALUES
+                ({project_id}, 'kanban', '{board['name']}', {board_position})
+        """
+        execute_query(connection, query)
+
+        # Calculate the next board postion.
+        board_position = board_position + (board_index * POSITION_GAP)
+
+        # Get the new board's ID
+        query = f"""SELECT id FROM board WHERE name='{board['name']}'"""
+        board_id = execute_read_query(connection, query)[0][0]
+        logging.debug(f"Board id: {board_id}")
+
+        for list_index, _list in enumerate(board["lists"]):
+            logging.info(f"Building {_list['name']} List.")
+            query = f"""
+                INSERT INTO
+                    list (board_id, name, position)
+                VALUES
+                    ({board_id}, '{_list['name']}', {list_position})
+            """
+            execute_query(connection, query)
+
+            # Calculate the next list position.
+            list_position = list_position + (list_index * POSITION_GAP)
+
+            # Get the new list's ID
+            query = f"""SELECT id FROM list WHERE name='{_list['name']}'"""
+            list_id = execute_read_query(connection, query)[0][0]
+            logging.debug(f"List id: {list_id}")
+
+            for card_index, card in enumerate(_list["cards"]):
+                logging.info(f"Building {card['name']} Card.")
+                query = f"""
+                    INSERT INTO
+                        card (board_id, list_id, name, position)
+                    VALUES
+                        ({board_id}, {list_id}, '{card['name']}', {card_position})
+                """
+                execute_query(connection, query)
+
+                # Calculate the next card postion.
+                card_position = card_position + (card_index * POSITION_GAP)
+
+                # Get the new card's ID
+                query = f"""SELECT id FROM card WHERE name='{card['name']}'"""
+                card_id = execute_read_query(connection, query)[0][0]
+                logging.debug(f"Card id: {card_id}")
+
+                for task in card["tasks"]:
+                    logging.debug(f"Adding {task}.")
+                    query = f"""
+                        INSERT INTO
+                            task (card_id, name, is_completed)
+                        VALUES
+                            ({card_id},'{task}', false)
+                    """
+                    execute_query(connection, query)
+
+        logging.info(f"{board['name']} Board Complete!")
+
+
 def main():
     """Set up logging, connect to Postgres, call requested function(s)."""
-    args: Dict[str, str] = docopt(__doc__, version="0.1")
+    parser = argparse.ArgumentParser(description="Build out a Planka setup.")
+    parser.add_argument(
+        "PROJECT_NAME",
+        action="store",
+        help="The project name",
+    )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "-l", "--load", action="store_true", dest="load", help="Load NMAP File."
+    )
+    group.add_argument(
+        "-n",
+        "--new",
+        action="store_true",
+        dest="new",
+        help="Set up a new Project from the the file planka_build.json",
+    )
+
+    parser.add_argument(
+        "--DB-host",
+        action="store",
+        dest="db_host",
+        default="127.0.0.1",
+        help="The host IP for the postgres server.",
+    )
+    parser.add_argument(
+        "--DB-pwd",
+        action="store",
+        dest="db_pwd",
+        default="planka",
+        help="Password for the postgres server.",
+    )
+    parser.add_argument(
+        "--DB-port",
+        action="store",
+        dest="db_port",
+        default="5432",
+        help="Port fo the postgres server.",
+    )
+    parser.add_argument(
+        "--DB-name",
+        action="store",
+        dest="db_name",
+        default="planka",
+        help="Postgres database name.",
+    )
+    parser.add_argument(
+        "--DB-user",
+        action="store",
+        dest="db_user",
+        default="postgres",
+        help="Username for the postgres server.",
+    )
+    parser.add_argument(
+        "--log-level",
+        action="store",
+        dest="log_level",
+        default="info",
+        help='If specified, then the log level will be set to the specified value.  Valid values are "debug", "info", "warning", "error", and "critical".',
+    )
+
+    args = parser.parse_args()
 
     # Set up logging
-    log_level = args["--log-level"]
+    log_level = args.log_level
     try:
         logging.basicConfig(
-            format="\n%(levelname)s: %(message)s", level=log_level.upper()
+            format="%(levelname)s: %(message)s", level=log_level.upper()
         )
     except ValueError:
         logging.critical(
@@ -124,20 +259,45 @@ def main():
     # Set up database connection
     try:
         connection = create_connection(
-            args["DB_NAME"],
-            args["DB_USER"],
-            args["DB_PASSWORD"],
-            args["DB_HOST"],
-            args["DB_PORT"],
+            args.db_name,
+            args.db_user,
+            args.db_pwd,
+            args.db_host,
+            args.db_port,
         )
     except OperationalError as e:
         logging.error(f"The connection error '{e}' occurred")
         return 1
 
-    if args["--new"]:
-        print("Code Stub for new project")
+    if args.new:
+        query = f"""
+        INSERT INTO
+            project (name)
+        VALUES
+            ('{args.PROJECT_NAME}')
+        """
+        # Create the new Project.
+        execute_query(connection, query)
 
-    elif args["--import"]:
+        # Gets value from first item in list and tuple
+        query = f"""SELECT id FROM project WHERE name='{args.PROJECT_NAME}'"""
+        project_id = execute_read_query(connection, query)[0][0]
+
+        # Adds demo user to project
+        query = """SELECT id FROM user_account WHERE username='demo'"""
+        user_id = execute_read_query(connection, query)[0][0]
+
+        query = f"""
+            INSERT INTO
+                project_membership(project_id, user_id)
+            VALUES
+                ({project_id}, {user_id})
+        """
+        execute_query(connection, query)
+
+        build_new(connection, project_id)
+
+    elif args.load:
         print("Code stub for import.")
 
 
