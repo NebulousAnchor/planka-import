@@ -1,0 +1,5 @@
+black
+docopt
+flake8
+ipython
+psycopg2-binary
