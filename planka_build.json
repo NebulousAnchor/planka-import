@@ -4,7 +4,7 @@
             "name": "Tasks",
             "lists": [
                 {
-                    "name": "To-do",
+                    "name": "To-Do",
                     "cards": [
                         {
                             "name": "NMAP",
@@ -67,10 +67,10 @@
             ]
         },
         {
-            "name": "Hammer",
+            "name": "Investigate",
             "lists": [
                 {
-                    "name": "To-do",
+                    "name": "To-Review",
                     "cards": []
                 },
                 {

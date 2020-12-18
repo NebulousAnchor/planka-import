@@ -8,7 +8,6 @@ import logging
 
 
 # Third-Party Libraries
-
 import psycopg2
 from psycopg2 import OperationalError
 
@@ -94,6 +93,63 @@ def execute_query(connection, query):
         logging.error(f"The error '{e}' occurred")
 
 
+def load_nmap(connection, project_id):
+    """Load parsed NMAP data into cards.
+
+    Args:
+        connection (Psycopg2 Connection): The connection to the postgres database.
+        project_id (string): The project that boards should be added to.
+    """
+
+    # Hold the postion of each item.
+    card_position = POSITION_GAP
+
+    # Get the board's ID
+    query = """SELECT id FROM board WHERE name='Investigate'"""
+    board_id = execute_read_query(connection, query)[0][0]
+    logging.debug(f"Board id: {board_id}")
+
+    # Get the new list's ID
+    query = """SELECT id FROM list WHERE name='To-Review'"""
+    list_id = execute_read_query(connection, query)[0][0]
+    logging.debug(f"List id: {list_id}")
+
+    logging.debug("Loading data structure from output.json")
+    with open("output.json", "r") as fp:
+        data = json.load(fp)
+
+    # Add the host card.
+    for card_index, card in enumerate(data["hosts"]):
+
+        # Calculate the next card postion.
+        card_position = card_position + (card_index * POSITION_GAP)
+
+        logging.info(f"Building {card['ip']} Card.")
+        query = f"""
+            INSERT INTO
+                card (board_id, list_id, name, position)
+            VALUES
+                ({board_id}, {list_id}, '{card['ip']}', {card_position})
+        """
+        execute_query(connection, query)
+
+        # Get the new card's ID
+        query = f"""SELECT id FROM card WHERE name='{card['ip']}'"""
+        card_id = execute_read_query(connection, query)[0][0]
+        logging.debug(f"Card id: {card_id}")
+
+        # Add port tasks
+        for task in card["ports"]:
+            logging.debug(f"Adding {task}.")
+            query = f"""
+                INSERT INTO
+                    task (card_id, name, is_completed)
+                VALUES
+                    ({card_id},'{task}', false)
+            """
+            execute_query(connection, query)
+
+
 def build_new(connection, project_id):
     """Build out the project boards
 
@@ -114,6 +170,9 @@ def build_new(connection, project_id):
     for board_index, board in enumerate(data_structure["boards"]):
         logging.info(f"Building {board['name']} Board.")
 
+        # Calculate the next board postion.
+        board_position = board_position + (board_index * POSITION_GAP)
+
         query = f"""
             INSERT INTO
                 board (project_id, type, name, position)
@@ -122,9 +181,6 @@ def build_new(connection, project_id):
         """
         execute_query(connection, query)
 
-        # Calculate the next board postion.
-        board_position = board_position + (board_index * POSITION_GAP)
-
         # Get the new board's ID
         query = f"""SELECT id FROM board WHERE name='{board['name']}'"""
         board_id = execute_read_query(connection, query)[0][0]
@@ -132,6 +188,10 @@ def build_new(connection, project_id):
 
         for list_index, _list in enumerate(board["lists"]):
             logging.info(f"Building {_list['name']} List.")
+
+            # Calculate the next list position.
+            list_position = list_position + (list_index * POSITION_GAP)
+
             query = f"""
                 INSERT INTO
                     list (board_id, name, position)
@@ -140,15 +200,15 @@ def build_new(connection, project_id):
             """
             execute_query(connection, query)
 
-            # Calculate the next list position.
-            list_position = list_position + (list_index * POSITION_GAP)
-
             # Get the new list's ID
             query = f"""SELECT id FROM list WHERE name='{_list['name']}'"""
             list_id = execute_read_query(connection, query)[0][0]
             logging.debug(f"List id: {list_id}")
 
             for card_index, card in enumerate(_list["cards"]):
+                # Calculate the next card postion.
+                card_position = card_position + (card_index * POSITION_GAP)
+
                 logging.info(f"Building {card['name']} Card.")
                 query = f"""
                     INSERT INTO
@@ -157,9 +217,6 @@ def build_new(connection, project_id):
                         ({board_id}, {list_id}, '{card['name']}', {card_position})
                 """
                 execute_query(connection, query)
-
-                # Calculate the next card postion.
-                card_position = card_position + (card_index * POSITION_GAP)
 
                 # Get the new card's ID
                 query = f"""SELECT id FROM card WHERE name='{card['name']}'"""
@@ -298,7 +355,11 @@ def main():
         build_new(connection, project_id)
 
     elif args.load:
-        print("Code stub for import.")
+        # Gets value from first item in list and tuple
+        query = f"""SELECT id FROM project WHERE name='{args.PROJECT_NAME}'"""
+        project_id = execute_read_query(connection, query)[0][0]
+
+        load_nmap(connection, project_id)
 
 
 if __name__ == "__main__":

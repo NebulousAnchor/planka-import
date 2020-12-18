@@ -14,7 +14,6 @@ do
         echo "WARNING: $DIR directory exisits!"
         echo "    Ensure direcotries are not needed and delete before running agian."
         echo " "
-        sleep 5
         exit 1 
     else
         echo "    Making $DIR..."
@@ -24,4 +23,3 @@ done
 
 echo "Directories created and ready for use."
 echo " "
-sleep 5
