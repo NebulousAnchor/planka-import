@@ -5,6 +5,8 @@
 import argparse
 import json
 import logging
+import tkinter as tk
+from tkinter import filedialog
 
 
 # Third-Party Libraries
@@ -12,6 +14,14 @@ import psycopg2
 from psycopg2 import OperationalError
 
 POSITION_GAP = 65535
+
+
+def select_file(msg):
+
+    print(f"Select a {msg} file")
+    return filedialog.askopenfilename(
+        title=f"Select a {msg} file.", filetypes=[("JSON File", ".json")]
+    )
 
 
 def generate_insert():
@@ -115,7 +125,9 @@ def load_nmap(connection, project_id):
     logging.debug(f"List id: {list_id}")
 
     logging.debug("Loading data structure from output.json")
-    with open("output.json", "r") as fp:
+    file_name = select_file("GNMAP")
+
+    with open(file_name, "r") as fp:
         data = json.load(fp)
 
     # Add the host card.
@@ -164,7 +176,8 @@ def build_new(connection, project_id):
     card_position = POSITION_GAP
 
     logging.debug("Loading data structure from planka_build.json")
-    with open("planka_build.json", "r") as fp:
+    file_name = select_file("Build")
+    with open(file_name, "r") as fp:
         data_structure = json.load(fp)
 
     for board_index, board in enumerate(data_structure["boards"]):
@@ -326,6 +339,10 @@ def main():
         logging.error(f"The connection error '{e}' occurred")
         return 1
 
+    # Set up tkinter
+    root = tk.Tk()
+    root.withdraw()
+
     if args.new:
         query = f"""
         INSERT INTO
@@ -341,6 +358,7 @@ def main():
         project_id = execute_read_query(connection, query)[0][0]
 
         # Adds demo user to project
+        # TODO handle already exists error.
         query = """SELECT id FROM user_account WHERE username='demo'"""
         user_id = execute_read_query(connection, query)[0][0]
 
